@@ -2,7 +2,7 @@
 
 #define ERROR 	(1)
 #define OK 		(0)
-#define FPWM 	(2) // nejaka zmena, coz
+#define FPWM 	(2)
 #define RPWM	(1000) // CLK*FPWM/RPWM must be lower than 65536
 #define CLK		(16000000)
 

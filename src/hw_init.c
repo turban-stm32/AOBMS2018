@@ -246,7 +246,7 @@ void TIM21_config(void)
 	/* (8) Force update generation (UG = 1) */
 
 
-	TIM21->PSC = (CLK*FPWM/RPWM)-1; /* (1) */
+	TIM21->PSC = (CLK/(RPWM*FPWM))-1; /* (1) */
 	TIM21->ARR = RPWM-1; /* (2) */
 	TIM21->CCR2 = pwm1; /* (3) */
 	TIM21->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE; /* (4) */
