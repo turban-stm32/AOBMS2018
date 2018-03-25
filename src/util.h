@@ -1,4 +1,5 @@
 #include "stm32l011xx.h"
+#include "global.h"
 
 void Delay_ms(uint32_t t);
 void USART2_putchar(uint8_t ch);
@@ -7,6 +8,8 @@ uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini);
 uint8_t STOI(uint8_t *s, uint8_t l, uint32_t *outi);
 uint8_t CHTOI(uint8_t inch, uint8_t outi);
 uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi);
+uint16_t qtoi(q16_t inq);
+uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq);
 void USART2_rxcharen(void);
 uint32_t gTicks(void);
 void USART2_rxchardis(void);
@@ -17,3 +20,4 @@ void rx_chbuff_f(void);
 void tx_buff_f(void);
 void rx_buff_f(void);
 void tx_nbuff_f(uint8_t n);
+uint8_t write_word_E2(uint32_t address, uint32_t ini);

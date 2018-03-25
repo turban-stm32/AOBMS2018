@@ -151,6 +151,8 @@ void *sVal()
 
 	TIM21->CCR2 = pwm1;
 
+	//write_word_E2((E2_ADDR+0), pwm1);
+
 
 
 	strncat((char*)tx_buff, (const char*)val_buff_str, sizeof(val_buff_str));
@@ -198,6 +200,11 @@ void HW_Init(void)
 	USART2_dmaen();
 	ADC_en();
 	ADC_DMA_conf();
+
+	//write_word_E2((E2_ADDR+0), (uint32_t)50);
+
+	pwm1= *(uint32_t *)(E2_ADDR+0);
+
 	TIM21_config();
 
 

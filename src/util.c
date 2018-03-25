@@ -3,6 +3,11 @@
 
 volatile uint32_t ticks;
 
+
+//****************************************************************************************
+// SysTick Functions
+//****************************************************************************************
+
 void Delay_ms(uint32_t t) // blocking
 {
 	uint32_t tickstart;
@@ -11,6 +16,19 @@ void Delay_ms(uint32_t t) // blocking
 	{
 	}
 }
+
+
+uint32_t gTicks(void)
+{
+	return ticks;
+}
+
+
+//****************************************************************************************
+// UART FUNCTIONS
+//****************************************************************************************
+
+
 void tx_chbuff_f(uint8_t ch)
 {
 	tx_buff[0]=ch;
@@ -45,28 +63,6 @@ void tx_nbuff_f(uint8_t n)
 	DMA1_Channel4->CCR |= DMA_CCR_EN; // enable dma
 }
 
-
-uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
-{
-	uint8_t n;
-	for( n = l; n > 0; n-- )
-	{
-
-		s[n-1]=(uint8_t)(ini%10) + '0';
-		ini /=10;
-		if ((s[n-1]=='0') && (ini==0))
-		{
-			//s=(s+1);
-
-		}
-		//n--;
-	}
-
-	return OK;
-}
-
-
-
 void USART2_txs(uint8_t *data, uint8_t length)
 {
 	for (uint8_t chn = 0; chn < length; ++chn) {
@@ -97,6 +93,90 @@ void USART2_rxcharen(void)
 	NVIC_SetPriority(USART2_IRQn, 0); // nastaveni irq priority=0
 	NVIC_EnableIRQ(USART2_IRQn); // povoleni irq
 
+}
+
+//****************************************************************************************
+// ADC FUNCTIONS
+//****************************************************************************************
+
+void ADC_dmaread(void)
+{
+	//GPIOA->ODR |= (1<<9);
+	ADC1->CR |= ADC_CR_ADSTART;
+	while ((ADC1->ISR & ADC_ISR_EOS)==0);
+	ADC1->ISR |= ADC_ISR_EOS;
+
+
+
+}
+
+//****************************************************************************************
+// NVM FUNCTIONS
+//****************************************************************************************
+
+uint8_t write_word_E2(uint32_t address, uint32_t ini)
+{
+
+	//unlock
+
+	/* (1) Wait till no operation is on going */
+	/* (2) Check if the PELOCK is unlocked */
+	/* (3) Perform unlock sequence */
+	while ((FLASH->SR & FLASH_SR_BSY) != 0) /* (1) */
+	{
+		/* For robust implementation, add here time-out management */
+	}
+	if ((FLASH->PECR & FLASH_PECR_PELOCK) != 0) /* (2) */
+	{
+		FLASH->PEKEYR = PEKEY1; /* (3) */
+		FLASH->PEKEYR = PEKEY2;
+	}
+
+	// write
+
+	*(uint32_t *)(address) = ini;
+
+
+	//lock
+
+	/* (1) Wait till no operation is on going */
+	/* (2) Locks the NVM by setting PELOCK in PECR */
+	while ((FLASH->SR & FLASH_SR_BSY) != 0) /* (1) */
+	{
+	/* For robust implementation, add here time-out management */
+	}
+	FLASH->PECR |= FLASH_PECR_PELOCK; /* (2) */
+
+
+
+	return OK;
+}
+
+
+//****************************************************************************************
+// Integer, string, Q FUNCTIONS
+//****************************************************************************************
+
+
+
+
+uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
+{
+	uint8_t n;
+	for( n = l; n > 0; n-- )
+	{
+
+		s[n-1]=(uint8_t)(ini%10) + '0';
+		ini /=10;
+		if ((s[n-1]=='0') && (ini==0))
+		{
+			//s=(s+1);
+
+		}
+		//n--;
+	}
+
+	return OK;
 }
 
 uint8_t CHTOI(uint8_t inch, uint8_t outi)
@@ -139,7 +219,7 @@ uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi)
 	uint8_t n=l;
 	uint64_t out=0;
 	uint32_t exp1=1;
-	uint32_t exp2=100000;
+	uint32_t exp2=DEC_ACCURACY;
 	while (n>0)
 	{
 		n--;
@@ -163,21 +243,35 @@ uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi)
 	}
 }
 
-void ADC_dmaread(void)
+uint8_t D100kITOQ(uint32_t ini, q16_t *outq)
 {
-	//GPIOA->ODR |= (1<<9);
-	ADC1->CR |= ADC_CR_ADSTART;
-	while ((ADC1->ISR & ADC_ISR_EOS)==0);
-	ADC1->ISR |= ADC_ISR_EOS;
+	uint16_t whole=0;
+	uint16_t frac=0;
+	uint32_t out=0;
+
+	whole = (uint16_t)ini/DEC_ACCURACY;
+	frac = (uint16_t)ini%DEC_ACCURACY;
 
 
 
+	return OK;
 }
 
-uint32_t gTicks(void)
+uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq)
 {
-	return ticks;
+	uint16_t whole=0;
+	uint16_t frac=0;
+
+	q16_t neco = 0x123;
+
+	whole = qtoi(neco);
+
+
+
+
+	return OK;
 }
+
 
 
 // otestovat
@@ -188,9 +282,10 @@ q16_t i16toq(uint16_t inp)
 	return (q16_t)(inp << 16);
 }
 
-uint16_t qtoi16(q16_t inp)
+uint16_t qtoi(q16_t inq)
 {
-	return (q16_t)(inp >> 16);
+	return (uint16_t)(inq >> 16);
+	//return 0;
 }
 
 
