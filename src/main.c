@@ -7,12 +7,13 @@ uint8_t rx_buff[];
 uint8_t cmd_buff[];
 uint8_t rx_chbuff=0;
 uint8_t tx_chbuff;
-uint8_t nr_buff[]="\n\r\0";
+const uint8_t nr_buff[]="\n\r\0";
 uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str[6], val_buff_str10k[10];
 uint32_t par_i=9999;
 uint16_t adc_vals[3];
 uint32_t pwm1=1;
+q16_t par_q=0;
 
 
 // state definitions
@@ -145,17 +146,21 @@ void *sVal()
 	strncat((char*)tx_buff, (const char*)param_buff,4);
 	strcat((char*)tx_buff, "=");
 
-	STOI(val_buff_str, sizeof(val_buff_str), &pwm1);
-	//memset(val_buff_str10k,0,sizeof(val_buff_str10k)); // clear valbuff10k
-	ITOS(val_buff_str, sizeof(val_buff_str), pwm1);
+	//STOI(val_buff_str, sizeof(val_buff_str), &pwm1);
+	STO100kI(val_buff_str, sizeof(val_buff_str),&par_i);
+	memset(val_buff_str10k,0,sizeof(val_buff_str10k)); // clear valbuff
+	I100kTOQ(par_i, &par_q);
+	QTOS(val_buff_str10k, sizeof(val_buff_str10k), par_q);
 
-	TIM21->CCR2 = pwm1;
+
+
+	//TIM21->CCR2 = pwm1;
 
 	//write_word_E2((E2_ADDR+0), pwm1);
 
 
 
-	strncat((char*)tx_buff, (const char*)val_buff_str, sizeof(val_buff_str));
+	strncat((char*)tx_buff, (const char*)val_buff_str10k, 6);
 	strcat((char*)tx_buff, " set");
 	strcat((char*)tx_buff, (const char*)nr_buff); // copy /n/r/ at the end
 	tx_buff_f(); // send complete txbuff

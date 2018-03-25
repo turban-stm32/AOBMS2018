@@ -1,5 +1,6 @@
 #include "util.h"
 #include "global.h"
+#include "string.h"
 
 volatile uint32_t ticks;
 
@@ -163,6 +164,9 @@ uint8_t write_word_E2(uint32_t address, uint32_t ini)
 uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
 {
 	uint8_t n;
+	uint8_t zcnt=0;
+
+
 	for( n = l; n > 0; n-- )
 	{
 
@@ -170,12 +174,18 @@ uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
 		ini /=10;
 		if ((s[n-1]=='0') && (ini==0))
 		{
-			//s=(s+1);
+			zcnt++;
 
 		}
 		//n--;
 	}
-
+	for (n=0; n<l; n++) // remove insignificant zeroes, realign the string
+	{
+		if ((zcnt+n)<l) s[n]=s[(zcnt+n)];
+		else s[n]=0;
+	}
+	if (zcnt==l) s[0]='0'; //add one zero if whole string is zero
+	//strcpy(temp, s);
 	return OK;
 }
 
@@ -243,31 +253,46 @@ uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi)
 	}
 }
 
-uint8_t D100kITOQ(uint32_t ini, q16_t *outq)
+uint8_t I100kTOQ(uint32_t ini, q16_t *outq)
 {
-	uint16_t whole=0;
-	uint16_t frac=0;
-	uint32_t out=0;
 
-	whole = (uint16_t)ini/DEC_ACCURACY;
-	frac = (uint16_t)ini%DEC_ACCURACY;
+	uint16_t fraci=0;
 
+	uint32_t div=DEC_ACCURACY;
 
+	*outq = i16toq((uint16_t)(ini/DEC_ACCURACY));
+	fraci = (uint16_t)(ini%DEC_ACCURACY);
+
+	for(uint8_t n=(16); n>0; n--)
+	{
+		div /=2;
+		*outq |= (fraci/div << (n-1));
+		fraci %= div;
+		if (fraci==0) break;
+	}
 
 	return OK;
 }
 
 uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq)
 {
-	uint16_t whole=0;
-	uint16_t frac=0;
-
-	q16_t neco = 0x123;
-
-	whole = qtoi(neco);
+	uint8_t wholes[6];
+	uint16_t fraci=0;
+	uint8_t fracs[6];
+	uint32_t div=DEC_ACCURACY;
 
 
+	ITOS(wholes, sizeof(wholes), (uint32_t)qtoi16(inq));
+	for(uint8_t n=16; n>0; n--)
+	{
+		div /=2;
+		fraci=fraci + (((inq>>(n-1)) & 1)*div);
+	}
+	ITOS(fracs, sizeof(fracs), fraci);
 
+	strcat((char*)s,(const char*)wholes);
+	strcat((char*)s, ".");
+	strcat((char*)s,(const char*)fracs);
 
 	return OK;
 }
@@ -282,7 +307,7 @@ q16_t i16toq(uint16_t inp)
 	return (q16_t)(inp << 16);
 }
 
-uint16_t qtoi(q16_t inq)
+uint16_t qtoi16(q16_t inq)
 {
 	return (uint16_t)(inq >> 16);
 	//return 0;
