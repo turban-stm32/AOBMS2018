@@ -161,7 +161,7 @@ uint8_t write_word_E2(uint32_t address, uint32_t ini)
 
 
 
-uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
+uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini, uint8_t align)
 {
 	uint8_t n;
 	uint8_t zcnt=0;
@@ -256,12 +256,12 @@ uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi)
 uint8_t I100kTOQ(uint32_t ini, q16_t *outq)
 {
 
-	uint16_t fraci=0;
+	uint32_t fraci=0;
 
 	uint32_t div=DEC_ACCURACY;
 
-	*outq = i16toq((uint16_t)(ini/DEC_ACCURACY));
-	fraci = (uint16_t)(ini%DEC_ACCURACY);
+	*outq = i16toq((uint16_t)(ini/DEC_ACCURACY)); // whole integer part
+	fraci = (ini%DEC_ACCURACY); // fractional part
 
 	for(uint8_t n=(16); n>0; n--)
 	{
@@ -277,18 +277,19 @@ uint8_t I100kTOQ(uint32_t ini, q16_t *outq)
 uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq)
 {
 	uint8_t wholes[6];
-	uint16_t fraci=0;
+	uint32_t fraci=0;
 	uint8_t fracs[6];
 	uint32_t div=DEC_ACCURACY;
 
 
-	ITOS(wholes, sizeof(wholes), (uint32_t)qtoi16(inq));
+	ITOS(wholes, sizeof(wholes), (uint32_t)qtoi16(inq), 0); //whole ineger part
 	for(uint8_t n=16; n>0; n--)
 	{
 		div /=2;
 		fraci=fraci + (((inq>>(n-1)) & 1)*div);
 	}
-	ITOS(fracs, sizeof(fracs), fraci);
+
+	ITOS(fracs, sizeof(fracs), fraci, 0);
 
 	strcat((char*)s,(const char*)wholes);
 	strcat((char*)s, ".");

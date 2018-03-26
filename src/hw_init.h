@@ -17,3 +17,4 @@ void USART_DMA_char_conf(void);
 void USART_DMA_conf(void);
 void ADC_DMA_conf(void);
 void TIM21_config(void);
+void init_params(void);

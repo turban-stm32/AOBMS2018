@@ -10,6 +10,10 @@
 #define PEKEY1 	((uint32_t)(0x89ABCDEF))
 #define PEKEY2 	((uint32_t)(0x02030405))
 
+//typedef
+typedef uint32_t q16_t; // defines signed fixpoint type, point precedes 16th digit (2^0)
+
+
 // VOLATILE
 
 extern uint8_t tx_buff[32];
@@ -29,10 +33,10 @@ extern const uint8_t nr_buff[];
 // VOLATILE, BACKED UP IN EEPROM
 
 extern uint32_t pwm1;
+extern q16_t thl1;
+extern q16_t thl2;
+extern q16_t thh1;
+extern q16_t thh2;
 
 
 
-
-
-//typedef
-typedef uint32_t q16_t; // defines signed fixpoint type, point precedes 16th digit (2^0)

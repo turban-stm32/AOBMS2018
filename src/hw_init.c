@@ -282,3 +282,14 @@ void USART2_dis(void)
 	RCC->APB1ENR &= ~(RCC_APB1ENR_USART2EN);
 	GPIOA->ODR &= ~(1<<9); // red led off
 }
+
+
+void init_params(void)
+{
+	pwm1= *(uint32_t *)(E2_ADDR+0);
+	thl1= *(uint32_t *)(E2_ADDR+4);
+	thl2= *(uint32_t *)(E2_ADDR+8);
+	thh1= *(uint32_t *)(E2_ADDR+12);
+	thh2= *(uint32_t *)(E2_ADDR+16);
+}
+
