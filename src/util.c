@@ -158,10 +158,30 @@ uint8_t write_word_E2(uint32_t address, uint32_t ini)
 // Integer, string, Q FUNCTIONS
 //****************************************************************************************
 
+uint8_t FTOS(uint8_t *s, uint8_t l, uint32_t ini)
+{
+	uint8_t n;
+	//uint8_t zcnt=0;
+	uint32_t div = DEC_ACCURACY/10;
+
+	for( n = 0; n < l; n++ )
+	{
+
+		s[n]=(uint8_t)((ini/div) + '0');
+		ini %=div;
+		div /=10;
+		if ((s[n]=='0') && (ini==0))
+		{
+			s[n]=0;
+
+		}
+	}
+
+	return OK;
+}
 
 
-
-uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini, uint8_t align)
+uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini)
 {
 	uint8_t n;
 	uint8_t zcnt=0;
@@ -280,16 +300,17 @@ uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq)
 	uint32_t fraci=0;
 	uint8_t fracs[6];
 	uint32_t div=DEC_ACCURACY;
+	memset(fracs,0,sizeof(fracs)); // clear fracs
 
 
-	ITOS(wholes, sizeof(wholes), (uint32_t)qtoi16(inq), 0); //whole ineger part
+	ITOS(wholes, sizeof(wholes), (uint32_t)qtoi16(inq)); //whole ineger part
 	for(uint8_t n=16; n>0; n--)
 	{
 		div /=2;
 		fraci=fraci + (((inq>>(n-1)) & 1)*div);
 	}
 
-	ITOS(fracs, sizeof(fracs), fraci, 0);
+	FTOS(fracs, sizeof(fracs), fraci);
 
 	strcat((char*)s,(const char*)wholes);
 	strcat((char*)s, ".");

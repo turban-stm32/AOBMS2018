@@ -24,7 +24,7 @@ void ADC_en(void)
 	//ADC1->SMPR = (ADC1->SMPR & ~(ADC_SMPR_SMP)) | ADC_SMPR_SMP_0 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_2;
 	ADC1->SMPR |= ADC_SMPR_SMP;
 	// channel select (PA5=ADC_IN5, PA6=ADC_IN6, PA7=ADC_IN7)
-	ADC1->CHSELR = ADC_CHSELR_CHSEL5 | ADC_CHSELR_CHSEL6 | ADC_CHSELR_CHSEL7;
+	ADC1->CHSELR = ADC_CHSELR_CHSEL5 | ADC_CHSELR_CHSEL6 | ADC_CHSELR_CHSEL7 | ADC_CHSELR_CHSEL17;
 	// auto off, overrun activation
 	ADC1->CFGR1 |= ADC_CFGR1_AUTOFF | ADC_CFGR1_OVRMOD;
 	//ADC1->CFGR1 |= ADC_CFGR1_OVRMOD;
@@ -56,7 +56,7 @@ void ADC_DMA_conf(void)
 	  DMA1_Channel1->CPAR = (uint32_t) (&(ADC1->DR)); /* (3) */
 	  DMA1_Channel1->CMAR = (uint32_t)(adc_vals); /* (4) */
 	  //DMA1_Channel1->CNDTR = (sizeof(adc_vals)/sizeof(uint16_t)); /* (5) */
-	  DMA1_Channel1->CNDTR = 3; /* (5) */
+	  DMA1_Channel1->CNDTR = 4; /* (5) */
 
 	  DMA1_Channel1->CCR |= DMA_CCR_MINC | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0;
 	  DMA1_Channel1->CCR |= DMA_CCR_EN; /* (7) */

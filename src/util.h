@@ -3,10 +3,13 @@
 
 void Delay_ms(uint32_t t);
 void USART2_putchar(uint8_t ch);
+
 void USART2_txs(uint8_t *data, uint8_t length);
-uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini, uint8_t align);
-uint8_t STOI(uint8_t *s, uint8_t l, uint32_t *outi);
 uint8_t CHTOI(uint8_t inch, uint8_t outi);
+uint8_t FTOS(uint8_t *s, uint8_t l, uint32_t ini);
+uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini);
+uint8_t STOI(uint8_t *s, uint8_t l, uint32_t *outi);
+
 uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi);
 uint16_t qtoi16(q16_t inq);
 q16_t i16toq(uint16_t inp);

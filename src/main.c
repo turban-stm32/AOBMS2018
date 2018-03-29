@@ -11,7 +11,7 @@ const uint8_t nr_buff[]="\n\r\0";
 uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 uint32_t par_i=9999;
-uint16_t adc_vals[3];
+uint16_t adc_vals[4];
 uint32_t pwm1=1;
 
 
@@ -105,7 +105,7 @@ void *parCmd()
 void *gVal()
 {
 
-	GPIOA->ODR ^= (1<<9);
+
 
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
 	//memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
@@ -113,20 +113,18 @@ void *gVal()
 
 
 	ADC_dmaread();
-	GPIOA->ODR ^= (1<<9); //toggle led
 	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
-	GPIOA->ODR ^= (1<<9); //toggle led
 	DMA1->IFCR |= DMA_IFCR_CTCIF1; /* Clear the flag */
-
 	DMA1_Channel1->CCR &= (uint32_t)(~DMA_CCR_EN); /* Disable DMA Channel 1 to write in CNDTR*/
-	DMA1_Channel1->CNDTR = 3; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
+	DMA1_Channel1->CNDTR = 4; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
 	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
 
 
-	if(strncmp((char*)param_buff, "adc0", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[0], 0);
-	else if(strncmp((char*)param_buff, "adc1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[1], 0);
-	else if(strncmp((char*)param_buff, "adc2", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[2], 0);
-	else if(strncmp((char*)param_buff, "pwm1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), pwm1, 0);
+	if(strncmp((char*)param_buff, "adc0", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[0]);
+	else if(strncmp((char*)param_buff, "adc1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[1]);
+	else if(strncmp((char*)param_buff, "adc2", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[2]);
+	else if(strncmp((char*)param_buff, "adc3", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[3]);
+	else if(strncmp((char*)param_buff, "pwm1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), pwm1);
 	else if(strncmp((char*)param_buff, "thl1", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thl1);
 	else if(strncmp((char*)param_buff, "thl2", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thl2);
 	else if(strncmp((char*)param_buff, "thh1", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thh1);
@@ -163,7 +161,7 @@ void *sVal()
 		STOI(val_buff_str_in, sizeof(val_buff_str_in), &pwm1);
 		TIM21->CCR2 = pwm1;
 		write_word_E2(E2_ADDR, pwm1);
-		ITOS(val_buff_str_out, sizeof(val_buff_str_out), pwm1, 0);
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), pwm1);
 	}
 	else if(strncmp((char*)param_buff, "thl1", 4)==0)
 	{
@@ -188,7 +186,7 @@ void *sVal()
 	{
 		STO100kI(val_buff_str_in, sizeof(val_buff_str_in),&temp_100k);
 		I100kTOQ(temp_100k, &thh1);
-		// some action
+		 //some action
 		write_word_E2((E2_ADDR+12), (uint32_t)thh1);
 		memset(val_buff_str_out,0,sizeof(val_buff_str_out)); // clear valbuff
 		QTOS(val_buff_str_out, sizeof(val_buff_str_out), thh1);

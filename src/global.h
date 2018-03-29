@@ -9,6 +9,7 @@
 #define E2_ADDR ((uint32_t)(0x08080000)) // starting address of data flash (EEPROM)
 #define PEKEY1 	((uint32_t)(0x89ABCDEF))
 #define PEKEY2 	((uint32_t)(0x02030405))
+#define VREFINT_CAL ((uint16_t*) ((uint32_t) 0x1FF80078))
 
 //typedef
 typedef uint32_t q16_t; // defines signed fixpoint type, point precedes 16th digit (2^0)
@@ -21,7 +22,7 @@ extern uint8_t rx_buff[16];
 extern uint8_t rx_chbuff;
 extern uint8_t tx_chbuff;
 extern uint8_t cmd_buff[16];
-extern uint16_t adc_vals[3];
+extern uint16_t adc_vals[4];
 extern uint8_t error_flag;
 
 // CONST
