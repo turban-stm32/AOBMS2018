@@ -57,44 +57,44 @@ void rx_buff_f(void)
 	DMA1_Channel5->CNDTR = sizeof(rx_buff);/* Data size */
 	DMA1_Channel5->CCR |= DMA_CCR_EN; // enable dma
 }
-void tx_nbuff_f(uint8_t n)
-{
-	DMA1_Channel4->CCR &=~ DMA_CCR_EN; // disable dma
-	DMA1_Channel4->CNDTR = n;/* Data size */
-	DMA1_Channel4->CCR |= DMA_CCR_EN; // enable dma
-}
+//void tx_nbuff_f(uint8_t n)
+//{
+//	DMA1_Channel4->CCR &=~ DMA_CCR_EN; // disable dma
+//	DMA1_Channel4->CNDTR = n;/* Data size */
+//	DMA1_Channel4->CCR |= DMA_CCR_EN; // enable dma
+//}
 
-void USART2_txs(uint8_t *data, uint8_t length)
-{
-	for (uint8_t chn = 0; chn < length; ++chn) {
-		USART2_putchar(data[chn]);
-		//GPIOC->ODR ^=(1<<0);
-	}
-	//GPIOC->ODR ^=(1<<6);
-}
+//void USART2_txs(uint8_t *data, uint8_t length)
+//{
+//	for (uint8_t chn = 0; chn < length; ++chn) {
+//		USART2_putchar(data[chn]);
+//		//GPIOC->ODR ^=(1<<0);
+//	}
+//	//GPIOC->ODR ^=(1<<6);
+//}
+//
+//void USART2_putchar(uint8_t ch)
+//{
+//	USART2->TDR = ch;
+//	while ((USART2->ISR & USART_ISR_TC)!=USART_ISR_TC)
+//	{
+//		//GPIOC->ODR ^=(1<<3);
+//	}
+//}
 
-void USART2_putchar(uint8_t ch)
-{
-	USART2->TDR = ch;
-	while ((USART2->ISR & USART_ISR_TC)!=USART_ISR_TC)
-	{
-		//GPIOC->ODR ^=(1<<3);
-	}
-}
-
-void USART2_rxchardis(void)
-{
-	USART2->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE);
-	NVIC_DisableIRQ(USART2_IRQn); // zakaz irq
-}
-void USART2_rxcharen(void)
-{
-	USART2->CR1 |= (USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE);
-
-	NVIC_SetPriority(USART2_IRQn, 0); // nastaveni irq priority=0
-	NVIC_EnableIRQ(USART2_IRQn); // povoleni irq
-
-}
+//void USART2_rxchardis(void)
+//{
+//	USART2->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE);
+//	NVIC_DisableIRQ(USART2_IRQn); // zakaz irq
+//}
+//void USART2_rxcharen(void)
+//{
+//	USART2->CR1 |= (USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE);
+//
+//	NVIC_SetPriority(USART2_IRQn, 0); // nastaveni irq priority=0
+//	NVIC_EnableIRQ(USART2_IRQn); // povoleni irq
+//
+//}
 
 //****************************************************************************************
 // ADC FUNCTIONS
@@ -107,8 +107,16 @@ void ADC_dmaread(void)
 	while ((ADC1->ISR & ADC_ISR_EOS)==0);
 	ADC1->ISR |= ADC_ISR_EOS;
 
+}
 
-
+q16_t getTemp(q16_t vdda, uint16_t meas)
+{
+	q16_t temp;
+	temp=qmul(qdiv(vdda, i16toq(3)),i16toq(meas));
+	temp+=qmul(qdiv(i16toq(3),i16toq(10)), i16toq(((*TEMP130_CAL)-(*TEMP30_CAL))<<4));
+	temp-=i16toq((*TEMP30_CAL)<<4);
+	temp =qmul(temp, qdiv(i16toq(100),i16toq((*TEMP130_CAL-*TEMP30_CAL)<<4)));
+	return temp;
 }
 
 //****************************************************************************************
@@ -338,7 +346,7 @@ uint16_t qtoi16(q16_t inq)
 
 q16_t qmul(q16_t ina, q16_t inb)
 {
-	return (ina>>(16/2))*(inb>>(16/2));
+	return ((ina>>(16/2))*(inb>>(16/2)));
 }
 q16_t qdiv(q16_t ina, q16_t inb)
 {

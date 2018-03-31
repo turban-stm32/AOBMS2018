@@ -11,7 +11,7 @@ const uint8_t nr_buff[]="\n\r\0";
 uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 uint32_t par_i=9999;
-uint16_t adc_vals[4];
+uint16_t adc_vals[5];
 uint32_t pwm1=1;
 
 
@@ -20,6 +20,9 @@ q16_t thl1=0;
 q16_t thl2=0;
 q16_t thh1=0;
 q16_t thh2=0;
+q16_t vdda_meas=0;
+q16_t vcell=0;
+q16_t temp=0;
 
 
 // state definitions
@@ -116,9 +119,14 @@ void *gVal()
 	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
 	DMA1->IFCR |= DMA_IFCR_CTCIF1; /* Clear the flag */
 	DMA1_Channel1->CCR &= (uint32_t)(~DMA_CCR_EN); /* Disable DMA Channel 1 to write in CNDTR*/
-	DMA1_Channel1->CNDTR = 4; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
+	DMA1_Channel1->CNDTR = 5; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
 	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
 
+
+	//vdda_meas=qdiv(i16toq((*VREFINT_CAL)*3),i16toq((uint16_t)adc_vals[3]));
+	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
+	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
+	temp=getTemp(vdda_meas,adc_vals[4]);
 
 	if(strncmp((char*)param_buff, "adc0", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[0]);
 	else if(strncmp((char*)param_buff, "adc1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[1]);
@@ -129,6 +137,10 @@ void *gVal()
 	else if(strncmp((char*)param_buff, "thl2", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thl2);
 	else if(strncmp((char*)param_buff, "thh1", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thh1);
 	else if(strncmp((char*)param_buff, "thh2", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thh2);
+	else if(strncmp((char*)param_buff, "vdda", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vdda_meas);
+	else if(strncmp((char*)param_buff, "temp", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), temp);
+	//else if(strncmp((char*)param_buff, "vdda", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (*VREFINT_CAL));
+	else if(strncmp((char*)param_buff, "vcel", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vcell);
 	else
 	{
 		strcat((char*)val_buff_str_in, "error\0");

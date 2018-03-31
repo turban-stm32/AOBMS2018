@@ -11,6 +11,8 @@ uint8_t ITOS(uint8_t *s, uint8_t l, uint32_t ini);
 uint8_t STOI(uint8_t *s, uint8_t l, uint32_t *outi);
 
 uint8_t STO100kI(uint8_t *s, uint8_t l, uint32_t *outi);
+q16_t qdiv(q16_t ina, q16_t inb);
+q16_t qmul(q16_t ina, q16_t inb);
 uint16_t qtoi16(q16_t inq);
 q16_t i16toq(uint16_t inp);
 uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq);
@@ -19,7 +21,7 @@ void USART2_rxcharen(void);
 uint32_t gTicks(void);
 void USART2_rxchardis(void);
 void ADC_dmaread(void);
-
+q16_t getTemp(q16_t vdda, uint16_t meas);
 void tx_chbuff_f(uint8_t ch);
 void rx_chbuff_f(void);
 void tx_buff_f(void);

@@ -1,4 +1,5 @@
-#define DEC_ACCURACY 100000 // decimal accuracy multiplier
+#define DEC_ACCURACY (100000) // decimal accuracy multiplier
+#define CELL_RES_DIV ((q16_t)(0x999B)) // cell resistor divider (15k/(15k+10k)=0.6) in q16 format
 
 #define ERROR 	(1)
 #define OK 		(0)
@@ -10,6 +11,8 @@
 #define PEKEY1 	((uint32_t)(0x89ABCDEF))
 #define PEKEY2 	((uint32_t)(0x02030405))
 #define VREFINT_CAL ((uint16_t*) ((uint32_t) 0x1FF80078))
+#define TEMP130_CAL ((uint16_t*) ((uint32_t) 0x1FF8007E))
+#define TEMP30_CAL  ((uint16_t*) ((uint32_t) 0x1FF8007A))
 
 //typedef
 typedef uint32_t q16_t; // defines signed fixpoint type, point precedes 16th digit (2^0)
@@ -22,8 +25,11 @@ extern uint8_t rx_buff[16];
 extern uint8_t rx_chbuff;
 extern uint8_t tx_chbuff;
 extern uint8_t cmd_buff[16];
-extern uint16_t adc_vals[4];
+extern uint16_t adc_vals[5];
 extern uint8_t error_flag;
+extern q16_t vdda_meas;
+extern q16_t vcell;
+extern q16_t temp;
 
 // CONST
 
