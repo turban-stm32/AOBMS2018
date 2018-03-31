@@ -82,6 +82,23 @@ void LED_io_conf(void)
 	//GPIOC->MODER = (GPIOC->MODER & ~(0x0000FFFF)) | (0x00005555); // PC0-PC7 as outputs (red leds)
 }
 
+void LPTIM_conf(void)
+{
+	RCC->CSR |=RCC_CSR_LSION; // Enable internal 37kHz RC oscillator
+	while ((RCC->CSR & RCC_CSR_LSIRDY)==0); // wait until LSI is ready
+	RCC->CCIPR |= RCC_CCIPR_LPTIM1SEL_0; //LSI selected for LPTIM
+
+	//RCC->APB1ENR |=RCC_APB1ENR_LPTIM1EN;
+
+	LPTIM1->CFGR |= LPTIM_CFGR_PRESC_0 | LPTIM_CFGR_PRESC_2; // LPTIM prescaler =32
+	LPTIM1->CR |=LPTIM_CR_ENABLE;
+	LPTIM1->ARR = 1000; // ~ 1000ms
+
+	//LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+
+}
+
+
 void RCC_Config(void)
 {
 
@@ -90,10 +107,8 @@ void RCC_Config(void)
 	//RCC->IOPENR |= RCC_IOPENR_GPIOCEN ; // portC povolit hodiny
 
 	RCC->CR |=  RCC_CR_HSION; // enable HSI
-	while ((RCC->CR & RCC_CR_HSIRDY)==0) // wait until HSI is ready
-	{
+	while ((RCC->CR & RCC_CR_HSIRDY)==0); // wait until HSI is ready
 
-	}
 
 	RCC->CFGR |= RCC_CFGR_SW_HSI; // sysclk=HSI
 	RCC->APB1ENR |= (RCC_APB1ENR_PWREN); // enable powercontrol
