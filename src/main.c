@@ -246,17 +246,21 @@ int main(void)
 {
 
 	HW_Init();
-	GPIOA->ODR &= ~(1<<9);
-	stp_t stp = init;
-	rx_chbuff_f();
+	LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+	//stp_t stp = init;
+	//rx_chbuff_f();
 
 	while(1)
 	{
-		stp = (stp_t)(*stp)();
+		//stp = (stp_t)(*stp)();
 
 
-
-		//Delay_ms(500);
+		if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
+		{
+			LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
+			GPIOA->ODR ^= (1 << 10); /* Toggle green led */
+			LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+		}
 
 
 	}
@@ -278,7 +282,7 @@ void HW_Init(void)
 	ADC_en();
 	ADC_DMA_conf();
 
-
+	LPTIM_conf();
 
 
 
