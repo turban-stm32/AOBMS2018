@@ -21,7 +21,9 @@ void *init(void);
 void *gVal(void);
 void *sVal(void);
 void *parCmd(void);
-
+void *autoLoop(void);
+void *meas(void);
+void *com(void);
 
 // State pointer
 typedef void *(*stp_t)();

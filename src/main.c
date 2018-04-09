@@ -12,7 +12,7 @@ uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 uint32_t par_i=9999;
 uint16_t adc_vals[5];
-uint32_t pwm1=1;
+uint32_t pwm1=300;
 
 
 q16_t par_q=0;
@@ -240,36 +240,70 @@ void *sVal()
 }
 
 
+void *autoLoop()
+{
+//	GPIOA->ODR &=~(1 << 10);// green led off
+//	if(!(GPIOA->IDR & GPIO_IDR_ID1))
+//	{
+//		return com;
+//	}
+
+	__WFE();
+	if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
+	{
+		return meas;
+	}
+
+
+
+	return autoLoop;
+}
+
+
+void *meas()
+{
+	//GPIOA->ODR &= ~(1 << 9); //red led off
+//	GPIOA->ODR |= (1 << 10); //green led on
+//	Delay_ms(30);
+//	GPIOA->ODR &= ~(1 << 10); //green led off
+	Delay_ms(3000);
+
+
+	LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
+	LPTIM1->CR |=LPTIM_CR_SNGSTRT; // restart lptim
+
+	return autoLoop;
+}
+
+void *com()
+{
+	GPIOA->ODR |=(1 << 10);// green led on
+	if(!(GPIOA->IDR & GPIO_IDR_ID1))
+	{
+		return com;
+	}
+	else
+	{
+		Delay_ms(3000);
+		return autoLoop;
+	}
+}
+
 // main loop
 
 int main(void)
 {
 
 	HW_Init();
-	LPTIM1->CR |=LPTIM_CR_SNGSTRT;
 
-	__WFE();
-	TIM21_config();
-	//stp_t stp = init;
-	//__NOP();
-	//rx_chbuff_f();
-	//__WFE();
+	stp_t stp = autoLoop;
+
+	//LPTIM1->CR |=LPTIM_CR_SNGSTRT;
 
 	while(1)
 	{
-		//__WFE();
-		//if((((GPIOA->IDR)>>1) & 0x1)==0)__WFE();
-		//if((((GPIOA->IDR)>>1) & 0x1)==0) GPIOA->ODR ^= (1 << 10); /* Toggle green led */
-		//stp = (stp_t)(*stp)();
 
-
-//		if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
-//		{
-//			LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
-//			GPIOA->ODR ^= (1 << 10); /* Toggle green led */
-//			LPTIM1->CR |=LPTIM_CR_SNGSTRT;
-//		}
-
+		stp = (stp_t)(*stp)();
 
 	}
 
@@ -280,7 +314,7 @@ void HW_Init(void)
 	RCC_Config();
 	SysTick_Config(16000);
 
-	init_params(); // reads parameters from FLASH
+	//init_params(); // reads parameters from FLASH
 
 	Butt_GPIO_Config();
 	LED_io_conf();
@@ -289,14 +323,9 @@ void HW_Init(void)
 	USART2_dmaen();
 	ADC_en();
 	ADC_DMA_conf();
-
-	LPTIM_conf();
 	STOP_mode_conf();
-
-	//__WFE();
-	//TIM21_config();
-
-
+	LPTIM_conf();
+	TIM21_config();
 
 }
 

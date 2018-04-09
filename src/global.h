@@ -3,8 +3,8 @@
 
 #define ERROR 	(1)
 #define OK 		(0)
-#define FPWM 	(2)	//pwm frequency
-#define RPWM	(1000) // pwm resolution - CAREFUL!! CLK*FPWM/RPWM must be lower than 65536
+#define FPWM 	(10)	//pwm frequency
+#define RPWM	(10000) // pwm resolution - CAREFUL!! CLK*FPWM/RPWM must be lower than 65536
 #define CLK		(16000000) //MCU base clk
 
 #define E2_ADDR ((uint32_t)(0x08080000)) // starting address of data flash (EEPROM)
