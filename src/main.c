@@ -253,6 +253,7 @@ void *autoLoop()
 	{
 		return meas;
 	}
+	TIM21->EGR |= TIM_EGR_UG; // re-initializes counter to 0 (DIR=1 (downcounter))
 	__WFE();
 
 

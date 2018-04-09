@@ -282,7 +282,7 @@ void TIM21_config(void)
 	/* (6) Enable output (MOE = 1)*/
 	/* (7) Enable counter (CEN = 1)
 		 select edge aligned mode (CMS = 00, reset value)
-		 select direction as upcounter (DIR = 0, reset value) */
+		 select direction as downcounter (DIR = 1) so pwm starts at L */
 	/* (8) Force update generation (UG = 1) */
 
 
@@ -291,7 +291,7 @@ void TIM21_config(void)
 	TIM21->CCR2 = pwm1; /* (3) */
 	TIM21->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE; /* (4) */
 	TIM21->CCER |= TIM_CCER_CC2E; /* (5) */
-	TIM21->CR1 |= TIM_CR1_CEN; /* (7) */
+	TIM21->CR1 |= TIM_CR1_CEN | TIM_CR1_DIR; /* (7) */
 	TIM21->EGR |= TIM_EGR_UG; /* (8) */
 }
 
