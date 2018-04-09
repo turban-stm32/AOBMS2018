@@ -247,20 +247,28 @@ int main(void)
 
 	HW_Init();
 	LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+
+	__WFE();
+	TIM21_config();
 	//stp_t stp = init;
+	//__NOP();
 	//rx_chbuff_f();
+	//__WFE();
 
 	while(1)
 	{
+		//__WFE();
+		//if((((GPIOA->IDR)>>1) & 0x1)==0)__WFE();
+		//if((((GPIOA->IDR)>>1) & 0x1)==0) GPIOA->ODR ^= (1 << 10); /* Toggle green led */
 		//stp = (stp_t)(*stp)();
 
 
-		if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
-		{
-			LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
-			GPIOA->ODR ^= (1 << 10); /* Toggle green led */
-			LPTIM1->CR |=LPTIM_CR_SNGSTRT;
-		}
+//		if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
+//		{
+//			LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
+//			GPIOA->ODR ^= (1 << 10); /* Toggle green led */
+//			LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+//		}
 
 
 	}
@@ -274,7 +282,7 @@ void HW_Init(void)
 
 	init_params(); // reads parameters from FLASH
 
-
+	Butt_GPIO_Config();
 	LED_io_conf();
 	USART2_io_conf();
 	USART_DMA_conf();
@@ -283,10 +291,10 @@ void HW_Init(void)
 	ADC_DMA_conf();
 
 	LPTIM_conf();
+	STOP_mode_conf();
 
-
-
-	TIM21_config();
+	//__WFE();
+	//TIM21_config();
 
 
 

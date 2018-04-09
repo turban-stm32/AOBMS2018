@@ -92,7 +92,7 @@ void LPTIM_conf(void)
 
 	LPTIM1->CFGR |= LPTIM_CFGR_PRESC_0 | LPTIM_CFGR_PRESC_2; // LPTIM prescaler =32
 	LPTIM1->CR |=LPTIM_CR_ENABLE;
-	LPTIM1->ARR = 5000; // ~ 5000ms
+	LPTIM1->ARR = 10000; // ~ 5000ms
 
 	//LPTIM1->CR |=LPTIM_CR_SNGSTRT;
 
@@ -114,7 +114,9 @@ void STOP_mode_conf(void)
 
 	EXTI->EMR |= EXTI_EMR_EM29;
 
-
+	DBGMCU->CR |=DBGMCU_CR_DBG_STOP;
+	DBGMCU->CR |=DBGMCU_CR_DBG_SLEEP;
+	DBGMCU->CR |=DBGMCU_CR_DBG_STANDBY;
 }
 
 
@@ -140,7 +142,7 @@ void Butt_GPIO_Config(void)
 {
 
 	GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODE13)); // 00 on PC13 position of MODER - input
-
+	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE1)); // PA1 as input - isolator power enable
 }
 
 
