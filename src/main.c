@@ -242,17 +242,18 @@ void *sVal()
 
 void *autoLoop()
 {
-//	GPIOA->ODR &=~(1 << 10);// green led off
-//	if(!(GPIOA->IDR & GPIO_IDR_ID1))
-//	{
-//		return com;
-//	}
+	GPIOA->ODR &=~(1 << 10);// green led off
+	if(!(GPIOA->IDR & GPIO_IDR_ID1))
+	{
+		return com;
+	}
 
-	__WFE();
+
 	if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
 	{
 		return meas;
 	}
+	__WFE();
 
 
 
@@ -266,6 +267,7 @@ void *meas()
 //	GPIOA->ODR |= (1 << 10); //green led on
 //	Delay_ms(30);
 //	GPIOA->ODR &= ~(1 << 10); //green led off
+
 	Delay_ms(3000);
 
 
@@ -277,6 +279,7 @@ void *meas()
 
 void *com()
 {
+
 	GPIOA->ODR |=(1 << 10);// green led on
 	if(!(GPIOA->IDR & GPIO_IDR_ID1))
 	{
@@ -284,7 +287,8 @@ void *com()
 	}
 	else
 	{
-		Delay_ms(3000);
+		//Delay_ms(3000);
+
 		return autoLoop;
 	}
 }
