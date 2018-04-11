@@ -328,10 +328,6 @@ uint8_t QTOS(uint8_t *s, uint8_t l, q16_t inq)
 }
 
 
-
-// otestovat
-
-
 q16_t i16toq(uint16_t inp)
 {
 	return (q16_t)(inp << 16);

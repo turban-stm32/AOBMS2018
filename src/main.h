@@ -24,6 +24,7 @@ void *parCmd(void);
 void *autoLoop(void);
 void *meas(void);
 void *com(void);
+void *balance(void);
 
 
 // State pointer

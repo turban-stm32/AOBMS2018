@@ -12,7 +12,8 @@ uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 uint32_t par_i=9999;
 uint16_t adc_vals[5];
-uint32_t pwm1=1;
+uint32_t pwm1=300;
+uint32_t wupe=5000;
 
 
 q16_t par_q=0;
@@ -25,17 +26,17 @@ q16_t vcell=0;
 q16_t temp=0;
 
 
+
+stp_t curr_s = autoLoop;
+stp_t prev_s;
+
+
 // state definitions
 void *init()
 {
 	static uint8_t n=0; // cmd buff counter
-
-
 	if (((DMA1->ISR & DMA_ISR_TCIF5) == DMA_ISR_TCIF5) ) // rx is complete
 	{
-
-
-
 		if (rx_buff[0]=='\r')// kdyz tu bude enter, netisknout, skocit do parcmd
 		{
 			n=0; // reset counter
@@ -47,9 +48,7 @@ void *init()
 			DMA1->IFCR = DMA_IFCR_CTCIF5;/* Clear TC flag */
 			n--; // decrement n
 			tx_chbuff_f(rx_buff[0]); // send tx buff
-
 		}
-
 		else if (n<=(sizeof(cmd_buff)-5))// jinak kdyz je misto v bufferu
 		{
 			cmd_buff[n++]=rx_buff[0]; // copy entered character to cmdbuff and post increment n
@@ -69,14 +68,10 @@ void *init()
 		DMA1->IFCR = DMA_IFCR_CTCIF4;/* Clear TC flag */
 		rx_chbuff_f();	// read next
 	}
-
-
-
 	return init;
 }
 void *parCmd()
 {
-
 	rx_buff[0]=0; // reset last entered character (enter key)
 	//strcpy((char*)tx_buff,"mesidz");
 	memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
@@ -101,19 +96,14 @@ void *parCmd()
 	memset(cmd_buff,0,sizeof(cmd_buff)); // clear cmdbuff
 	strcat((char*)tx_buff, (const char*)nr_buff); // copy /n/r/ at the end
 	tx_buff_f(); // send complete txbuff
-	return init;
+	return com;
 }
 
 
 void *gVal()
 {
-
-
-
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
 	//memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
-
-
 
 	ADC_dmaread();
 	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
@@ -123,7 +113,7 @@ void *gVal()
 	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
 
 
-	//vdda_meas=qdiv(i16toq((*VREFINT_CAL)*3),i16toq((uint16_t)adc_vals[3]));
+
 	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
 	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
 	temp=getTemp(vdda_meas,adc_vals[4]);
@@ -157,7 +147,7 @@ void *gVal()
 	tx_buff_f(); // send complete txbuff
 	memset(cmd_buff,0,sizeof(cmd_buff)); // clear cmdbuff
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
-	return init;
+	return com;
 }
 
 
@@ -217,10 +207,6 @@ void *sVal()
 		strcat((char*)val_buff_str_in, "error\0");
 	}
 
-
-
-
-
 //	STO100kI(val_buff_str, sizeof(val_buff_str),&par_i);
 //	memset(val_buff_str10k,0,sizeof(val_buff_str10k)); // clear valbuff
 //	I100kTOQ(par_i, &par_q);
@@ -234,52 +220,151 @@ void *sVal()
 	tx_buff_f(); // send complete txbuff
 	memset(cmd_buff,0,sizeof(cmd_buff)); // clear cmdbuff
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
-	return init;
+	return com;
 
 
 }
+
+
+void *autoLoop()
+{
+	GPIOA->ODR &=~(1 << 10);// green led off
+	if(!(GPIOA->IDR & GPIO_IDR_ID1))
+	{
+		USART2_dmaen();
+		return com;
+	}
+	if ((LPTIM1->ISR & LPTIM_ISR_ARRM) != 0) /* Check ARR match */
+	{
+		prev_s=autoLoop;
+		return meas;
+	}
+	TIM21->EGR |= TIM_EGR_UG; // re-initializes counter to 0 (DIR=1 (downcounter))
+	Delay_ms(5000);
+	//__WFE(); // stop until LPTIM wakes the MCU up
+	return autoLoop;
+}
+
+void *meas()
+{
+
+	GPIOA->ODR |= (1 << 10); //green led on
+
+	ADC_dmaread();
+	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
+	DMA1->IFCR |= DMA_IFCR_CTCIF1; /* Clear the flag */
+	DMA1_Channel1->CCR &= (uint32_t)(~DMA_CCR_EN); /* Disable DMA Channel 1 to write in CNDTR*/
+	DMA1_Channel1->CNDTR = 5; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
+	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
+
+	LPTIM1->ICR |= LPTIM_ICR_ARRMCF; /* Clear ARR match flag */
+	LPTIM1->CR |=LPTIM_CR_SNGSTRT; // restart lptim
+
+	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
+	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
+	temp=getTemp(vdda_meas,adc_vals[4]);
+
+
+
+
+
+	return prev_s;
+}
+
+void *com()
+{
+	GPIOA->ODR |=(1 << 10);// green led on
+
+	static uint8_t n=0; // cmd buff counter
+
+	if(!(GPIOA->IDR & GPIO_IDR_ID1))
+	{
+		rx_chbuff_f();
+
+		if (((DMA1->ISR & DMA_ISR_TCIF5) == DMA_ISR_TCIF5) ) // rx is complete
+		{
+			if (rx_buff[0]=='\r')// kdyz tu bude enter, netisknout, skocit do parcmd
+			{
+				n=0; // reset counter
+				DMA1->IFCR = DMA_IFCR_CTCIF5; // clear flag
+				return parCmd; // goto parCmd
+			}
+			else if (rx_buff[0]==8 || rx_buff[0]==127)// kdyz bude backspace
+			{
+				DMA1->IFCR = DMA_IFCR_CTCIF5;/* Clear TC flag */
+				n--; // decrement n
+				tx_chbuff_f(rx_buff[0]); // send tx buff
+			}
+			else if (n<=(sizeof(cmd_buff)-5))// jinak kdyz je misto v bufferu
+			{
+				cmd_buff[n++]=rx_buff[0]; // copy entered character to cmdbuff and post increment n
+				DMA1->IFCR = DMA_IFCR_CTCIF5;/* Clear TC flag */
+				//ITOS(tx_buff,5,rx_buff[0]);
+				tx_chbuff_f(rx_buff[0]); // send tx buff
+				//tx_buff_f();
+			}
+			else
+			{
+				DMA1->IFCR = DMA_IFCR_CTCIF5;/* Clear TC flag */
+				rx_chbuff_f();	// read next
+			}
+		}
+		else if((DMA1->ISR & DMA_ISR_TCIF4) == DMA_ISR_TCIF4) // je tx dokonceno
+		{
+			DMA1->IFCR = DMA_IFCR_CTCIF4;/* Clear TC flag */
+			rx_chbuff_f();	// read next
+		}
+
+		return com;
+	}
+	else
+	{
+		USART2_dis();
+		return autoLoop;
+	}
+}
+
+void *balance()
+{
+	GPIOA->ODR |=(1 << 10);// green led on
+	Delay_ms(3000);
+	return autoLoop;
+}
+
 
 
 // main loop
 
 int main(void)
 {
-
 	HW_Init();
-	GPIOA->ODR &= ~(1<<9);
-	stp_t stp = init;
-	rx_chbuff_f();
+	//GPIOA->ODR &= ~(1<<9);
+	//stp_t stp = autoLoop;
+	//rx_chbuff_f();
 
 	while(1)
 	{
-		stp = (stp_t)(*stp)();
-
-
-
-		//Delay_ms(500);
-
-
+		curr_s = (stp_t)(*curr_s)();
 	}
-
 }
 
 void HW_Init(void)
 {
 	RCC_Config();
 	SysTick_Config(16000);
-
+	Butt_GPIO_Config();
 	init_params(); // reads parameters from FLASH
 
 
 	LED_io_conf();
 	USART2_io_conf();
 	USART_DMA_conf();
-	USART2_dmaen();
+	//USART2_dmaen();
 	ADC_en();
 	ADC_DMA_conf();
+	LPTIM_conf();
 
-
-
+	STOP_mode_conf();
 
 
 	TIM21_config();

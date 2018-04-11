@@ -92,7 +92,7 @@ void LPTIM_conf(void)
 
 	LPTIM1->CFGR |= LPTIM_CFGR_PRESC_0 | LPTIM_CFGR_PRESC_2; // LPTIM prescaler =32
 	LPTIM1->CR |=LPTIM_CR_ENABLE;
-	LPTIM1->ARR =5000; // ~ 5000ms
+	LPTIM1->ARR =wupe;
 
 	LPTIM1->CR |=LPTIM_CR_SNGSTRT;
 
@@ -110,9 +110,9 @@ void STOP_mode_conf(void)
 	RCC->CFGR |= RCC_CFGR_STOPWUCK; /* (3) */
 
 
-	LPTIM1->IER |= LPTIM_IER_ARRMIE;
+	LPTIM1->IER |= LPTIM_IER_ARRMIE; // Interrupt on ARR match
 
-	EXTI->EMR |= EXTI_EMR_EM29;
+	EXTI->EMR |= EXTI_EMR_EM29; // event mask ->LPTIM
 
 	DBGMCU->CR |=DBGMCU_CR_DBG_STOP;
 	DBGMCU->CR |=DBGMCU_CR_DBG_SLEEP;
@@ -122,20 +122,14 @@ void STOP_mode_conf(void)
 
 void RCC_Config(void)
 {
-
-
 	RCC->IOPENR |= RCC_IOPENR_GPIOAEN ; // porta povolit hodiny
 	//RCC->IOPENR |= RCC_IOPENR_GPIOCEN ; // portC povolit hodiny
-
 	RCC->CR |=  RCC_CR_HSION; // enable HSI
 	while ((RCC->CR & RCC_CR_HSIRDY)==0); // wait until HSI is ready
-
-
 	RCC->CFGR |= RCC_CFGR_SW_HSI; // sysclk=HSI
 	RCC->APB1ENR |= (RCC_APB1ENR_PWREN); // enable powercontrol
 	PWR->CR = (PWR->CR & ~(PWR_CR_VOS)) | PWR_CR_VOS_0; // set voltage range
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; // enable SYSCFG
-
 }
 
 void Butt_GPIO_Config(void)
@@ -168,22 +162,22 @@ void USART2_io_conf(void)
 }
 
 
-void USART2_en(void)
-{
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN; // enable periph clock usart2
-	USART2->BRR = 16000000/9600; //clk / baudrate
-	USART2->CR1 = USART_CR1_TE | USART_CR1_UE | USART_CR1_RE; // usart enable, transmitter enable, receiver enable
-	while((USART2->ISR & USART_ISR_TC) != USART_ISR_TC) //pocka nez odejde idle frame
-	{
-	    /* add time out here for a robust application */
-	}
-	USART2->ICR = USART_ICR_TCCF;/* clear TC flag */
-	//USART2->CR1 |= USART_CR1_TCIE;/* enable TC interrupt */
-	//NVIC_SetPriority(USART2_IRQn, 0); // nastaveni irq priority=0
-	//NVIC_EnableIRQ(USART2_IRQn); // povoleni irq
-	//GPIOA->ODR |= (1<<9); // red led on
-
-}
+//void USART2_en(void)
+//{
+//	RCC->APB1ENR |= RCC_APB1ENR_USART2EN; // enable periph clock usart2
+//	USART2->BRR = 16000000/9600; //clk / baudrate
+//	USART2->CR1 = USART_CR1_TE | USART_CR1_UE | USART_CR1_RE; // usart enable, transmitter enable, receiver enable
+//	while((USART2->ISR & USART_ISR_TC) != USART_ISR_TC) //pocka nez odejde idle frame
+//	{
+//	    /* add time out here for a robust application */
+//	}
+//	USART2->ICR = USART_ICR_TCCF;/* clear TC flag */
+//	//USART2->CR1 |= USART_CR1_TCIE;/* enable TC interrupt */
+//	//NVIC_SetPriority(USART2_IRQn, 0); // nastaveni irq priority=0
+//	//NVIC_EnableIRQ(USART2_IRQn); // povoleni irq
+//	//GPIOA->ODR |= (1<<9); // red led on
+//
+//}
 
 
 void USART_DMA_char_conf(void)
@@ -312,7 +306,7 @@ void USART2_dmaen(void)
 		/* add time out here for a robust application */
 	}
 	USART2->ICR = USART_ICR_TCCF;/* clear TC flag */
-	GPIOA->ODR |= (1<<9); // red led on
+	//GPIOA->ODR |= (1<<9); // red led on
 }
 
 
@@ -320,7 +314,7 @@ void USART2_dis(void)
 {
 	USART2->CR1 &= ~(USART_CR1_TE | USART_CR1_UE | USART_CR1_RE);
 	RCC->APB1ENR &= ~(RCC_APB1ENR_USART2EN);
-	GPIOA->ODR &= ~(1<<9); // red led off
+	//GPIOA->ODR &= ~(1<<9); // red led off
 }
 
 
