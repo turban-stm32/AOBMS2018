@@ -209,8 +209,8 @@ void *autoLoop() // default loop in automatic mode
 		return meas;
 	}
 	TIM21->EGR |= TIM_EGR_UG; // re-initializes counter to 0 (DIR=1 (downcounter))
-	Delay_ms(5000);
-	//__WFE(); // stop until LPTIM wakes the MCU up
+	//Delay_ms(5000);
+	__WFE(); // stop until LPTIM wakes the MCU up
 	return autoLoop;
 }
 
@@ -234,7 +234,10 @@ void *meas() // measure state
 	temp=getTemp(vdda_meas,adc_vals[4]);
 
 
-
+	if(temp>thh1)
+	{
+		return balance;
+	}
 
 
 	return prev_s; // go to previous state defined
