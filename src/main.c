@@ -81,7 +81,7 @@ void *parCmd()
 	{
 		case '?':
 			strncpy((char*)param_buff,(const char*)cmd_buff,4);
-
+			prev_s=parCmd;
 			return gVal();
 			break;
 		case '=':
@@ -102,21 +102,27 @@ void *parCmd()
 
 void *gVal()
 {
+	if(prev_s==parCmd)
+	{
+		prev_s=gVal;
+		return meas;
+	}
+
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
 	//memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
 
-	ADC_dmaread();
-	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
-	DMA1->IFCR |= DMA_IFCR_CTCIF1; /* Clear the flag */
-	DMA1_Channel1->CCR &= (uint32_t)(~DMA_CCR_EN); /* Disable DMA Channel 1 to write in CNDTR*/
-	DMA1_Channel1->CNDTR = 5; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
-	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
-
-
-
-	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
-	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
-	temp=getTemp(vdda_meas,adc_vals[4]);
+//	ADC_dmaread();
+//	while((DMA1->ISR & DMA_ISR_TCIF1) == 0); // blocking until DMA is complete
+//	DMA1->IFCR |= DMA_IFCR_CTCIF1; /* Clear the flag */
+//	DMA1_Channel1->CCR &= (uint32_t)(~DMA_CCR_EN); /* Disable DMA Channel 1 to write in CNDTR*/
+//	DMA1_Channel1->CNDTR = 5; /* Reload the number of DMA tranfer to be performs on DMA channel 1 */
+//	DMA1_Channel1->CCR |= DMA_CCR_EN; /* Enable again DMA Channel 1 */
+//
+//
+//
+//	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
+//	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
+//	temp=getTemp(vdda_meas,adc_vals[4]);
 
 	if(strncmp((char*)param_buff, "adc0", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[0]);
 	else if(strncmp((char*)param_buff, "adc1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[1]);
