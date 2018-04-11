@@ -88,14 +88,35 @@ void LPTIM_conf(void)
 	while ((RCC->CSR & RCC_CSR_LSIRDY)==0); // wait until LSI is ready
 	RCC->CCIPR |= RCC_CCIPR_LPTIM1SEL_0; //LSI selected for LPTIM
 
-	//RCC->APB1ENR |=RCC_APB1ENR_LPTIM1EN;
+	RCC->APB1ENR |=RCC_APB1ENR_LPTIM1EN;
 
 	LPTIM1->CFGR |= LPTIM_CFGR_PRESC_0 | LPTIM_CFGR_PRESC_2; // LPTIM prescaler =32
 	LPTIM1->CR |=LPTIM_CR_ENABLE;
-	LPTIM1->ARR = 1000; // ~ 1000ms
+	LPTIM1->ARR =5000; // ~ 5000ms
 
-	//LPTIM1->CR |=LPTIM_CR_SNGSTRT;
+	LPTIM1->CR |=LPTIM_CR_SNGSTRT;
 
+}
+
+void STOP_mode_conf(void)
+{
+	/* (1) Set SLEEPDEEP bit of Cortex System Control Register */
+	/* (2) Clear PDDS bit and set LPDS bit in PWR_CR
+	clear WUF in PWR_CSR by setting CWUF in PWR_CR */
+	/* (3) Select HSI as clock while exiting stop mode */
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk; /* (1) */
+	PWR->CR = (PWR->CR & (uint32_t)(~(PWR_CR_PDDS)))
+	| PWR_CR_LPSDSR | PWR_CR_CWUF; /* (2) */
+	RCC->CFGR |= RCC_CFGR_STOPWUCK; /* (3) */
+
+
+	LPTIM1->IER |= LPTIM_IER_ARRMIE;
+
+	EXTI->EMR |= EXTI_EMR_EM29;
+
+	DBGMCU->CR |=DBGMCU_CR_DBG_STOP;
+	DBGMCU->CR |=DBGMCU_CR_DBG_SLEEP;
+	DBGMCU->CR |=DBGMCU_CR_DBG_STANDBY;
 }
 
 
@@ -120,8 +141,11 @@ void RCC_Config(void)
 void Butt_GPIO_Config(void)
 {
 
-	GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODE13)); // 00 on PC13 position of MODER - input
-
+	//GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODE13)); // 00 on PC13 position of MODER - input
+	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE1)); // PA1 as input - isolator power enable
+	//SYSCFG->EXTICR[0] = (SYSCFG->EXTICR[0] & ~(SYSCFG_EXTICR1_EXTI1)) | (SYSCFG_EXTICR1_EXTI1_PA); //EXTI na PA1
+	//EXTI->EMR |= EXTI_EMR_EM1;
+	//EXTI->FTSR |= EXTI_FTSR_FT1;
 }
 
 
