@@ -36,7 +36,7 @@ q16_t temp=0;
 //****************************************************************************************
 
 stp_t curr_s = autoLoop;
-stp_t prev_s;
+stp_t prev_s, next_s;
 
 //****************************************************************************************
 // STATE FUNCTIONS
@@ -208,7 +208,7 @@ void *autoLoop() // default loop in automatic mode
 		prev_s=autoLoop;
 		return meas;
 	}
-	TIM21->EGR |= TIM_EGR_UG; // re-initializes counter to 0 (DIR=1 (downcounter))
+	//TIM21->EGR |= TIM_EGR_UG; // re-initializes counter to 0 (DIR=1 (downcounter))
 	//Delay_ms(5000);
 	__WFE(); // stop until LPTIM wakes the MCU up
 	return autoLoop;
@@ -299,7 +299,13 @@ void *com() // enable and control UART communication state
 void *balance() // state to perform balancing
 {
 	GPIOA->ODR |=(1 << 10);// green led on
-	Delay_ms(3000);
+
+	TIM21->CR1 |=TIM_CR1_CEN;
+	TIM2->CR1 |=TIM_CR1_CEN;
+
+
+
+
 	return autoLoop;
 }
 
@@ -335,5 +341,5 @@ void HW_Init(void)
 	ADC_DMA_conf();
 	LPTIM_conf();
 	STOP_mode_conf();
-	TIM21_config();
+	TIMxy_config();
 }

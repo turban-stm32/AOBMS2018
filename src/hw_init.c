@@ -114,9 +114,8 @@ void STOP_mode_conf(void)
 
 	EXTI->EMR |= EXTI_EMR_EM29; // event mask ->LPTIM
 
-	DBGMCU->CR |=DBGMCU_CR_DBG_STOP;
-	DBGMCU->CR |=DBGMCU_CR_DBG_SLEEP;
-	DBGMCU->CR |=DBGMCU_CR_DBG_STANDBY;
+	DBGMCU->CR |=DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STANDBY;
+
 }
 
 
@@ -266,9 +265,9 @@ void TIM21_config(void)
 	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE9)) | (GPIO_MODER_MODE9_1); /* (3) */
 	GPIOA->AFR[1] |= (0x5 << GPIO_AFRH_AFRH1_Pos); /* (4) */
 
-	/* (1) Set prescaler to 15, so APBCLK/16 i.e 1MHz */
-	/* (2) Set ARR = 8, as timer clock is 1MHz the period is 9 us */
-	/* (3) Set CCRx = 4, , the signal will be high during 4 us */
+	/* (1) Set prescaler */
+	/* (2) Set ARR */
+	/* (3) Set CCRx  */
 	/* (4) Select PWM mode 1 on OC1  (OC1M = 110),
 		 enable preload register on OC1 (OC1PE = 1) */
 	/* (5) Select active high polarity on OC1 (CC1P = 0, reset value),
@@ -288,7 +287,47 @@ void TIM21_config(void)
 	TIM21->CR1 |= TIM_CR1_CEN | TIM_CR1_DIR; /* (7) */
 	TIM21->EGR |= TIM_EGR_UG; /* (8) */
 }
+void TIMxy_config(void)
+{
 
+
+	RCC->APB2ENR |= RCC_APB2ENR_TIM21EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+	RCC->IOPENR |= RCC_IOPENR_GPIOAEN; /* (2) */
+	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE9)) | (GPIO_MODER_MODE9_1); /* (3) */
+	GPIOA->AFR[1] |= (0x5 << GPIO_AFRH_AFRH1_Pos); /* (4) */
+
+	/* (1) Set prescaler to 15, so APBCLK/16 i.e 1MHz */
+	/* (2) Set ARR = 8, as timer clock is 1MHz the period is 9 us */
+	/* (3) Set CCRx = 4, , the signal will be high during 4 us */
+	/* (4) Select PWM mode 1 on OC1  (OC1M = 110),
+		 enable preload register on OC1 (OC1PE = 1) */
+	/* (5) Select active high polarity on OC1 (CC1P = 0, reset value),
+		 enable the output on OC1 (CC1E = 1)*/
+	/* (6) Enable output (MOE = 1)*/
+	/* (7) Enable counter (CEN = 1)
+		 select edge aligned mode (CMS = 00, reset value)
+		 select direction as downcounter (DIR = 1) so pwm starts at L */
+	/* (8) Force update generation (UG = 1) */
+
+	TIM21->SMCR |=TIM_SMCR_SMS_0 | TIM_SMCR_SMS_2; // slave mode gated
+
+	TIM2->CR2 |= TIM_CR2_MMS_2; // Master mode OC1REF (MMS=100)
+
+	TIM21->PSC = (CLK/(RPWM*FPWM))-1; /* (1) */
+	TIM2->PSC = 16000; // one ms step
+	TIM2->ARR = 9999;// 0 to 10s range
+	TIM2->CCR1 = 999;// 1s selected
+	TIM21->ARR = RPWM-1; /* (2) */
+	TIM21->CCR2 = pwm1; /* (3) */
+	TIM21->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_0 | TIM_CCMR1_OC2PE; /* (4) */
+	TIM2->CCMR1 |= TIM_CCMR1_OC1M_1; // deactivate on match
+	TIM21->CCER |= TIM_CCER_CC2E; /* (5) */
+	//TIM21->CR1 |= TIM_CR1_DIR; /* (7) */
+	TIM21->EGR |= TIM_EGR_UG; /* (8) */
+	TIM2->EGR |= TIM_EGR_UG;
+}
 
 
 
