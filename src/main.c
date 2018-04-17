@@ -13,7 +13,7 @@ uint8_t tx_chbuff;
 const uint8_t nr_buff[]="\n\r\0";
 uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
-//uint32_t par_i=9999;
+uint32_t mode=0;
 uint16_t adc_vals[5]; // adc dma buffer
 uint32_t pwm1=300; // tim21 pwm
 uint32_t wupe=5000; // lptim1 timeout (WakeUpPEriod)
@@ -125,6 +125,7 @@ void *sVal() // set value state
 	strncat((char*)tx_buff, (const char*)param_buff,4);
 	strcat((char*)tx_buff, "=");
 	uint32_t temp_100k;
+	next_s = com;
 
 
 	if(strncmp((char*)param_buff, "pwm1", 4)==0)
@@ -171,6 +172,12 @@ void *sVal() // set value state
 		memset(val_buff_str_out,0,sizeof(val_buff_str_out)); // clear valbuff
 		QTOS(val_buff_str_out, sizeof(val_buff_str_out), thh2);
 	}
+	else if(strncmp((char*)param_buff, "mode", 4)==0)
+	{
+		STOI(val_buff_str_in, sizeof(val_buff_str_in), &mode);
+		next_s=balance;
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), mode);
+	}
 	else
 	{
 		strcat((char*)val_buff_str_in, "error\0");
@@ -189,7 +196,7 @@ void *sVal() // set value state
 	tx_buff_f(); // send complete txbuff
 	memset(cmd_buff,0,sizeof(cmd_buff)); // clear cmdbuff
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
-	return com;
+	return next_s;
 
 
 }
@@ -298,15 +305,20 @@ void *com() // enable and control UART communication state
 
 void *balance() // state to perform balancing
 {
-	GPIOA->ODR |=(1 << 10);// green led on
+	//GPIOA->ODR |=(1 << 10);// green led on
+	GPIOA->ODR &=~(1 << 10);// green led off
 
-	TIM21->CR1 |=TIM_CR1_CEN;
-	TIM2->CR1 |=TIM_CR1_CEN;
+	//TIM21->CR1 |=TIM_CR1_CEN;
+	//TIM2->CR1 |=TIM_CR1_CEN;
+	TIM2->EGR |= TIM_EGR_UG;
+	//Delay_ms(5000);
 
 
+	//TIM2->CR1 &=~(TIM_CR1_CEN);
+	//TIM21->CR1 &=~(TIM_CR1_CEN);
+	//Delay_ms(5000);
 
-
-	return autoLoop;
+	return com;
 }
 
 

@@ -31,6 +31,8 @@ extern q16_t vdda_meas;
 extern q16_t vcell;
 extern q16_t temp;
 
+extern uint32_t mode;
+
 // CONST
 
 extern const uint8_t nr_buff[];
@@ -41,6 +43,7 @@ extern const uint8_t nr_buff[];
 
 extern uint32_t pwm1;
 extern uint32_t wupe;
+
 extern q16_t thl1;
 extern q16_t thl2;
 extern q16_t thh1;

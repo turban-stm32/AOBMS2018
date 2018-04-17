@@ -298,7 +298,7 @@ void TIMxy_config(void)
 	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE9)) | (GPIO_MODER_MODE9_1); /* (3) */
 	GPIOA->AFR[1] |= (0x5 << GPIO_AFRH_AFRH1_Pos); /* (4) */
 
-	/* (1) Set prescaler to 15, so APBCLK/16 i.e 1MHz */
+	/* (1) Set prescaler*/
 	/* (2) Set ARR = 8, as timer clock is 1MHz the period is 9 us */
 	/* (3) Set CCRx = 4, , the signal will be high during 4 us */
 	/* (4) Select PWM mode 1 on OC1  (OC1M = 110),
@@ -311,22 +311,33 @@ void TIMxy_config(void)
 		 select direction as downcounter (DIR = 1) so pwm starts at L */
 	/* (8) Force update generation (UG = 1) */
 
-	TIM21->SMCR |=TIM_SMCR_SMS_0 | TIM_SMCR_SMS_2; // slave mode gated
+
 
 	TIM2->CR2 |= TIM_CR2_MMS_2; // Master mode OC1REF (MMS=100)
+	TIM2->CCMR1 |= TIM_CCMR1_OC1M_2 |TIM_CCMR1_OC1M_1; // deactivate on match
+	//TIM2->CR1 |= TIM_CR1_OPM;
+	TIM21->SMCR |=TIM_SMCR_SMS_0 | TIM_SMCR_SMS_2; // slave mode gated
 
-	TIM21->PSC = (CLK/(RPWM*FPWM))-1; /* (1) */
 	TIM2->PSC = 16000; // one ms step
 	TIM2->ARR = 9999;// 0 to 10s range
 	TIM2->CCR1 = 999;// 1s selected
+
+	TIM21->PSC = (CLK/(RPWM*FPWM))-1; /* (1) */
 	TIM21->ARR = RPWM-1; /* (2) */
 	TIM21->CCR2 = pwm1; /* (3) */
 	TIM21->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_0 | TIM_CCMR1_OC2PE; /* (4) */
-	TIM2->CCMR1 |= TIM_CCMR1_OC1M_1; // deactivate on match
-	TIM21->CCER |= TIM_CCER_CC2E; /* (5) */
+
+
+	TIM2->CCER |= TIM_CCER_CC1E;
+	TIM21->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P; /* (5) */
+
 	//TIM21->CR1 |= TIM_CR1_DIR; /* (7) */
 	TIM21->EGR |= TIM_EGR_UG; /* (8) */
-	TIM2->EGR |= TIM_EGR_UG;
+
+	TIM21->CR1 |=TIM_CR1_CEN;
+	TIM2->CR1 |=TIM_CR1_CEN;
+
+	TIM2->EGR |= TIM_EGR_UG ;
 }
 
 
