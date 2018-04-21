@@ -8,11 +8,11 @@
 #define CLK		(16000000) //MCU base clk
 
 #define E2_ADDR ((uint32_t)(0x08080000)) // starting address of data flash (EEPROM)
-#define PEKEY1 	((uint32_t)(0x89ABCDEF))
-#define PEKEY2 	((uint32_t)(0x02030405))
-#define VREFINT_CAL ((uint16_t*) ((uint32_t) 0x1FF80078))
-#define TEMP130_CAL ((uint16_t*) ((uint32_t) 0x1FF8007E))
-#define TEMP30_CAL  ((uint16_t*) ((uint32_t) 0x1FF8007A))
+#define PEKEY1 	((uint32_t)(0x89ABCDEF)) // protection key to write EEPROM
+#define PEKEY2 	((uint32_t)(0x02030405)) // protection key to write EEPROM
+#define VREFINT_CAL ((uint16_t*) ((uint32_t) 0x1FF80078)) // internal Vref calibration value
+#define TEMP130_CAL ((uint16_t*) ((uint32_t) 0x1FF8007E)) // internal T=130degC calibration value
+#define TEMP30_CAL  ((uint16_t*) ((uint32_t) 0x1FF8007A)) // internal T=30degC calibration value
 
 //typedef
 typedef uint32_t q16_t; // defines signed fixpoint type, point precedes 16th digit (2^0)
@@ -27,9 +27,9 @@ extern uint8_t tx_chbuff;
 extern uint8_t cmd_buff[16];
 extern uint16_t adc_vals[5];
 extern uint8_t error_flag;
-extern q16_t vdda_meas;
-extern q16_t vcell;
-extern q16_t temp;
+extern q16_t vdda_meas; // MCU Vdda measured
+extern q16_t vcell; // measured Vcell
+extern q16_t temp; // measured temperature
 
 extern uint32_t mode;
 
@@ -41,13 +41,16 @@ extern const uint8_t nr_buff[];
 
 // VOLATILE, BACKED UP IN EEPROM
 
-extern uint32_t pwm1;
-extern uint32_t wupe;
+extern uint32_t pwm1; //duty cycle
+extern uint32_t wupe; // WakeUp Period (lptimer)
+extern uint32_t ibal; // balancing current (in mA)
+extern uint32_t tbal; // balancing time in msec
 
-extern q16_t thl1;
-extern q16_t thl2;
-extern q16_t thh1;
-extern q16_t thh2;
+extern q16_t thl1; // low threshold 1
+extern q16_t thl2; // low threshold 2
+extern q16_t thh1; // high threshold 1
+extern q16_t thh2; // high threshold 2
+extern q16_t tmph; // temp threshold
 
 
 

@@ -5,18 +5,22 @@
 // INTEGER VARIABLES
 //****************************************************************************************
 
-uint8_t tx_buff[] = "pocem";
+
+uint8_t tx_buff[];
 uint8_t rx_buff[];
 uint8_t cmd_buff[];
 uint8_t rx_chbuff=0;
 uint8_t tx_chbuff;
-const uint8_t nr_buff[]="\n\r\0";
+const uint8_t nr_buff[]="\n\r";
 uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
+
 uint32_t mode=0;
 uint16_t adc_vals[5]; // adc dma buffer
 uint32_t pwm1=300; // tim21 pwm
 uint32_t wupe=5000; // lptim1 timeout (WakeUpPEriod)
+uint32_t ibal=200; // balancing current in mA
+uint32_t tbal=3000; //balancing time in msec
 
 //****************************************************************************************
 // FIXED POINT VARIABLES
@@ -30,12 +34,14 @@ q16_t thh2=0;
 q16_t vdda_meas=0;
 q16_t vcell=0;
 q16_t temp=0;
+q16_t tmph =(99<<16); // first init tmph=99degC
+
 
 //****************************************************************************************
 // STEP VARIABLES
 //****************************************************************************************
 
-stp_t curr_s = autoLoop;
+stp_t curr_s = autoLoop; // initial state definition
 stp_t prev_s, next_s;
 
 //****************************************************************************************
@@ -92,14 +98,18 @@ void *gVal() // get value state
 	else if(strncmp((char*)param_buff, "adc2", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[2]);
 	else if(strncmp((char*)param_buff, "adc3", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[3]);
 	else if(strncmp((char*)param_buff, "pwm1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), pwm1);
+	else if(strncmp((char*)param_buff, "ibal", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), ibal);
+	else if(strncmp((char*)param_buff, "wupe", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), wupe);
+	else if(strncmp((char*)param_buff, "tbal", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), tbal);
+	else if(strncmp((char*)param_buff, "tmph", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), tmph);
 	else if(strncmp((char*)param_buff, "thl1", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thl1);
 	else if(strncmp((char*)param_buff, "thl2", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thl2);
 	else if(strncmp((char*)param_buff, "thh1", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thh1);
 	else if(strncmp((char*)param_buff, "thh2", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), thh2);
 	else if(strncmp((char*)param_buff, "vdda", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vdda_meas);
 	else if(strncmp((char*)param_buff, "temp", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), temp);
-	//else if(strncmp((char*)param_buff, "vdda", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (*VREFINT_CAL));
 	else if(strncmp((char*)param_buff, "vcel", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vcell);
+	else if(strncmp((char*)param_buff, "mode", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), mode);
 	else
 	{
 		strcat((char*)val_buff_str_in, "error\0");
@@ -172,15 +182,53 @@ void *sVal() // set value state
 		memset(val_buff_str_out,0,sizeof(val_buff_str_out)); // clear valbuff
 		QTOS(val_buff_str_out, sizeof(val_buff_str_out), thh2);
 	}
-	else if(strncmp((char*)param_buff, "mode", 4)==0)
+	else if(strncmp((char*)param_buff, "tmph", 4)==0)
+	{
+		STO100kI(val_buff_str_in, sizeof(val_buff_str_in),&temp_100k);
+		I100kTOQ(temp_100k, &tmph);
+		mode |= (1<<0); //set first bit = temp threshold initialized
+		write_word_E2((E2_ADDR+20), (uint32_t)mode);
+		write_word_E2((E2_ADDR+24), (uint32_t)tmph);
+		memset(val_buff_str_out,0,sizeof(val_buff_str_out)); // clear valbuff
+		QTOS(val_buff_str_out, sizeof(val_buff_str_out), tmph);
+	}
+	else if(strncmp((char*)param_buff, "tbal", 4)==0)
+	{
+		STOI(val_buff_str_in, sizeof(val_buff_str_in), &tbal);
+		mode |= (1<<1); //set second bit = balancing time initialized
+		write_word_E2((E2_ADDR+20), (uint32_t)mode);
+		write_word_E2((E2_ADDR+28), (uint32_t)tbal);
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), tbal);
+	}
+	else if(strncmp((char*)param_buff, "ibal", 4)==0)
+	{
+		STOI(val_buff_str_in, sizeof(val_buff_str_in), &ibal);
+		mode |= (1<<2); //set third bit = balancing current initialized
+		write_word_E2((E2_ADDR+20), (uint32_t)mode);
+		write_word_E2((E2_ADDR+32), (uint32_t)ibal);
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), ibal);
+	}
+	else if(strncmp((char*)param_buff, "wupe", 4)==0)
+	{
+		STOI(val_buff_str_in, sizeof(val_buff_str_in), &wupe);
+		mode |= (1<<3);
+		write_word_E2((E2_ADDR+20), (uint32_t)mode);
+		write_word_E2((E2_ADDR+36), (uint32_t)wupe);
+		LPTIM1->ARR =wupe;
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), wupe);
+	}
+	else if(strncmp((char*)param_buff, "mode", 4)==0) // mode =1..7
 	{
 		STOI(val_buff_str_in, sizeof(val_buff_str_in), &mode);
-		next_s=balance;
+
+		if((mode>>6)&1) next_s=balance; // sixth bit==1, goto balancing mode
+		timestamp=gTicks();
+		write_word_E2((E2_ADDR+20), (uint32_t)mode);
 		ITOS(val_buff_str_out, sizeof(val_buff_str_out), mode);
 	}
 	else
 	{
-		strcat((char*)val_buff_str_in, "error\0");
+		strcat((char*)val_buff_str_out, "error\0");
 	}
 
 //	STO100kI(val_buff_str, sizeof(val_buff_str),&par_i);
@@ -241,13 +289,30 @@ void *meas() // measure state
 	temp=getTemp(vdda_meas,adc_vals[4]);
 
 
-	if(temp>thh1)
+	if(temp>tmph)
 	{
-		return balance;
+		if (prev_s==autoLoop)
+		{
+			timestamp=gTicks();
+			next_s=balance;
+		}
+		else if (prev_s==gVal)
+		{
+			memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
+			strcat((char*)tx_buff, "\n\rOvertemperature! \n\r\0"); // overtemperature info
+			tx_buff_f(); // send
+			while ((DMA1->ISR & DMA_ISR_TCIF4) != DMA_ISR_TCIF4);// blocking until message is sent
+			memset(tx_buff,0,sizeof(tx_buff)); // clear txbuff
+			//strcat((char*)tx_buff, (const char*)nr_buff); // copy /n/r/ at the end
+			next_s=prev_s;
+		}
+
+
 	}
+	else next_s=prev_s; //get back where you come from (autoloop)
 
 
-	return prev_s; // go to previous state defined
+	return next_s; // go to previous state defined
 }
 
 void *com() // enable and control UART communication state
@@ -305,12 +370,22 @@ void *com() // enable and control UART communication state
 
 void *balance() // state to perform balancing
 {
+
 	//GPIOA->ODR |=(1 << 10);// green led on
 	GPIOA->ODR &=~(1 << 10);// green led off
 
-	//TIM21->CR1 |=TIM_CR1_CEN;
+	TIM21->CR1 |=TIM_CR1_CEN;
+
+	next_s=balance;
+	if(gTicks()>=(timestamp+tbal))
+	{
+		next_s=autoLoop;
+		TIM21->CR1 &=~TIM_CR1_CEN;
+
+	}
+
 	//TIM2->CR1 |=TIM_CR1_CEN;
-	TIM2->EGR |= TIM_EGR_UG;
+	//TIM2->EGR |= TIM_EGR_UG;
 	//Delay_ms(5000);
 
 
@@ -318,7 +393,7 @@ void *balance() // state to perform balancing
 	//TIM21->CR1 &=~(TIM_CR1_CEN);
 	//Delay_ms(5000);
 
-	return com;
+	return next_s;
 }
 
 
@@ -328,6 +403,7 @@ void *balance() // state to perform balancing
 
 int main(void)
 {
+
 	HW_Init();
 	while(1)
 	{
@@ -353,5 +429,5 @@ void HW_Init(void)
 	ADC_DMA_conf();
 	LPTIM_conf();
 	STOP_mode_conf();
-	TIMxy_config();
+	TIM21_config();
 }

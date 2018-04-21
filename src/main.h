@@ -12,7 +12,7 @@
 
 uint8_t intbuff[10];
 uint8_t fracbuff[10];
-
+uint32_t timestamp;
 
 void HW_Init(void);
 

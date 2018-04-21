@@ -284,7 +284,8 @@ void TIM21_config(void)
 	TIM21->CCR2 = pwm1; /* (3) */
 	TIM21->CCMR1 |= TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2PE; /* (4) */
 	TIM21->CCER |= TIM_CCER_CC2E; /* (5) */
-	TIM21->CR1 |= TIM_CR1_CEN | TIM_CR1_DIR; /* (7) */
+	//TIM21->CR1 |= TIM_CR1_CEN | TIM_CR1_DIR; /* (7) */
+
 	TIM21->EGR |= TIM_EGR_UG; /* (8) */
 }
 void TIMxy_config(void)
@@ -375,5 +376,13 @@ void init_params(void)
 	thl2= *(uint32_t *)(E2_ADDR+8);
 	thh1= *(uint32_t *)(E2_ADDR+12);
 	thh2= *(uint32_t *)(E2_ADDR+16);
+
+	mode= *(uint32_t *)(E2_ADDR+20);
+
+	if((mode>>0)&1) tmph= *(uint32_t *)(E2_ADDR+24);
+
+	if((mode>>1)&1) tbal= *(uint32_t *)(E2_ADDR+28);
+	if((mode>>2)&1) ibal= *(uint32_t *)(E2_ADDR+32);
+	if((mode>>3)&1) wupe= *(uint32_t *)(E2_ADDR+36);
 }
 
