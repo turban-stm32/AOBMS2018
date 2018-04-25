@@ -300,6 +300,7 @@ void *meas() // measure state
 	vcell=getVoltage(vdda_meas, adc_vals[0], CELL_RES_DIV);
 	vpack_hi=getVoltage(vdda_meas, adc_vals[1], PACKHI_RES_DIV);
 	vpack_lo=qmul(vdda_meas,PACKLO_RES_DIV)-getVoltage(vdda_meas, adc_vals[2], PACKLO_RES_DIV);
+	vpack=vpack_hi+vpack_lo-vdda_meas;
 	temp=getTemp(vdda_meas,adc_vals[4]);
 
 
