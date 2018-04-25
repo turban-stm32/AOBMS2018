@@ -108,6 +108,7 @@ void *gVal() // get value state
 
 	if(strncmp((char*)param_buff, "vpah", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vpack_hi);
 	else if(strncmp((char*)param_buff, "vpal", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vpack_lo);
+	else if(strncmp((char*)param_buff, "vpck", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vpack);
 	else if(strncmp((char*)param_buff, "pwm1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), pwm1);
 	else if(strncmp((char*)param_buff, "ibal", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), ibal);
 	else if(strncmp((char*)param_buff, "wupe", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), wupe);
