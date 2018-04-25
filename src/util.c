@@ -121,6 +121,11 @@ q16_t getTemp(q16_t vdda, uint16_t meas)
 	return temp;
 }
 
+q16_t getVoltage(q16_t vdda, uint16_t meas, q16_t divider)
+{
+	return qmul(qmul((i16toq(meas)>>16),vdda),divider); // division by 2^16 (full scale of ADC resolution)
+}
+
 //****************************************************************************************
 // NVM FUNCTIONS
 //****************************************************************************************

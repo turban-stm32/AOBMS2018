@@ -23,6 +23,7 @@ uint32_t gTicks(void);
 void USART2_rxchardis(void);
 void ADC_dmaread(void);
 q16_t getTemp(q16_t vdda, uint16_t meas);
+q16_t getVoltage(q16_t vdda, uint16_t meas, q16_t divider);
 void tx_chbuff_f(uint8_t ch);
 void rx_chbuff_f(void);
 void tx_buff_f(void);

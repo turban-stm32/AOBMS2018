@@ -16,6 +16,16 @@ uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 
 uint32_t mode=0;
+uint32_t mode_tmp=0;
+
+//mode0..temp threshold initialized
+//mode1..tbal time initialized
+//mode2..ibal current initialized
+//mode3..wupe time initialized
+//mode7..force balance mode
+
+
+
 uint16_t adc_vals[5]; // adc dma buffer
 uint32_t pwm1=300; // tim21 pwm
 uint32_t wupe=5000; // lptim1 timeout (WakeUpPEriod)
@@ -33,6 +43,9 @@ q16_t thh1=0;
 q16_t thh2=0;
 q16_t vdda_meas=0;
 q16_t vcell=0;
+q16_t vpack_hi=0;
+q16_t vpack_lo=0;
+q16_t vpack=0;
 q16_t temp=0;
 q16_t tmph =(99<<16); // first init tmph=99degC
 
@@ -93,10 +106,8 @@ void *gVal() // get value state
 	memset(val_buff_str_in,0,sizeof(val_buff_str_in)); // clear valbuff
 
 
-	if(strncmp((char*)param_buff, "adc0", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[0]);
-	else if(strncmp((char*)param_buff, "adc1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[1]);
-	else if(strncmp((char*)param_buff, "adc2", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[2]);
-	else if(strncmp((char*)param_buff, "adc3", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), (uint32_t)adc_vals[3]);
+	if(strncmp((char*)param_buff, "vpah", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vpack_hi);
+	else if(strncmp((char*)param_buff, "vpal", 4)==0) QTOS(val_buff_str_in, sizeof(val_buff_str_in), vpack_lo);
 	else if(strncmp((char*)param_buff, "pwm1", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), pwm1);
 	else if(strncmp((char*)param_buff, "ibal", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), ibal);
 	else if(strncmp((char*)param_buff, "wupe", 4)==0) ITOS(val_buff_str_in, sizeof(val_buff_str_in), wupe);
@@ -217,13 +228,14 @@ void *sVal() // set value state
 		LPTIM1->ARR =wupe;
 		ITOS(val_buff_str_out, sizeof(val_buff_str_out), wupe);
 	}
-	else if(strncmp((char*)param_buff, "mode", 4)==0) // mode =1..7
+	else if(strncmp((char*)param_buff, "fbal", 4)==0) // force balancing mode
 	{
 		STOI(val_buff_str_in, sizeof(val_buff_str_in), &mode);
 
-		if((mode>>6)&1) next_s=balance; // sixth bit==1, goto balancing mode
+		if((mode>>7)&1) next_s=balance;// seventh bit==1, goto balancing mode
+
 		timestamp=gTicks();
-		write_word_E2((E2_ADDR+20), (uint32_t)mode);
+		//write_word_E2((E2_ADDR+20), (uint32_t)mode);
 		ITOS(val_buff_str_out, sizeof(val_buff_str_out), mode);
 	}
 	else
@@ -285,7 +297,9 @@ void *meas() // measure state
 	LPTIM1->CR |=LPTIM_CR_SNGSTRT; // restart lptim
 
 	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
-	vcell=qdiv(qmul((i16toq(adc_vals[0])>>16),vdda_meas),CELL_RES_DIV); // division by 2^16 (full scale of ADC resolution)
+	vcell=getVoltage(vdda_meas, adc_vals[0], CELL_RES_DIV);
+	vpack_hi=getVoltage(vdda_meas, adc_vals[1], PACKHI_RES_DIV);
+	vpack_lo=qmul(vdda_meas,PACKLO_RES_DIV)-getVoltage(vdda_meas, adc_vals[2], PACKLO_RES_DIV);
 	temp=getTemp(vdda_meas,adc_vals[4]);
 
 
@@ -392,7 +406,7 @@ void *balance() // state to perform balancing
 	//TIM2->CR1 &=~(TIM_CR1_CEN);
 	//TIM21->CR1 &=~(TIM_CR1_CEN);
 	//Delay_ms(5000);
-
+	mode &= ~(1<<7);// reset seventh bit of mode
 	return next_s;
 }
 

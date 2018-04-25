@@ -1,5 +1,7 @@
 #define DEC_ACCURACY (100000) // decimal accuracy multiplier
-#define CELL_RES_DIV ((q16_t)(0x999B)) // cell resistor divider (15k/(15k+10k)=0.6) in q16 format
+#define CELL_RES_DIV ((q16_t)(0x1AAAA)) // cell resistor 1/divider ((15k+10k)/15k=1.66666) in q16 format
+#define PACKHI_RES_DIV ((q16_t)(0x215555)) // pack hi measurement resistor 1/divider ((220k+6.8k)/6.8k=33.33333) in q16 format
+#define PACKLO_RES_DIV ((q16_t)(0x215555)) // pack lo measurement resistor 1/divider ((220k+6.8k)/6.8k=33.33333) in q16 format
 
 #define ERROR 	(1)
 #define OK 		(0)
