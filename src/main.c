@@ -16,7 +16,7 @@ uint8_t machine, get;
 uint8_t param_buff[4], val_buff_str_in[6], val_buff_str_out[6], val_buff_str_100k[10];
 
 uint32_t mode=0;
-uint32_t mode_tmp=0;
+uint32_t fbal=0;
 
 //mode0..temp threshold initialized
 //mode1..tbal time initialized
@@ -27,7 +27,7 @@ uint32_t mode_tmp=0;
 
 
 uint16_t adc_vals[5]; // adc dma buffer
-uint32_t pwm1=300; // tim21 pwm
+uint32_t pwm1=30; // tim21 pwm
 uint32_t wupe=5000; // lptim1 timeout (WakeUpPEriod)
 uint32_t ibal=200; // balancing current in mA
 uint32_t tbal=3000; //balancing time in msec
@@ -231,13 +231,13 @@ void *sVal() // set value state
 	}
 	else if(strncmp((char*)param_buff, "fbal", 4)==0) // force balancing mode
 	{
-		STOI(val_buff_str_in, sizeof(val_buff_str_in), &mode);
+		STOI(val_buff_str_in, sizeof(val_buff_str_in), &fbal);
 
-		if((mode>>7)&1) next_s=balance;// seventh bit==1, goto balancing mode
+		if((fbal>>7)&1) next_s=balance;// seventh bit==1, goto balancing mode
 
 		timestamp=gTicks();
 		//write_word_E2((E2_ADDR+20), (uint32_t)mode);
-		ITOS(val_buff_str_out, sizeof(val_buff_str_out), mode);
+		ITOS(val_buff_str_out, sizeof(val_buff_str_out), fbal);
 	}
 	else
 	{
@@ -387,7 +387,7 @@ void *com() // enable and control UART communication state
 void *balance() // state to perform balancing
 {
 
-	//GPIOA->ODR |=(1 << 10);// green led on
+	//GPIOA->ODR |=(1 << 9);// red led on
 	GPIOA->ODR &=~(1 << 10);// green led off
 
 	TIM21->CR1 |=TIM_CR1_CEN;

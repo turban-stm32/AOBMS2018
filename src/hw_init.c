@@ -77,7 +77,7 @@ void ADC_dis(void){
 void LED_io_conf(void)
 {
 	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE10)) | (GPIO_MODER_MODE10_0); // PA10 as output (green led)
-	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE9)) | (GPIO_MODER_MODE9_0); // PA9 as output (red led)
+	//GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE9)) | (GPIO_MODER_MODE9_0); // PA9 as output (red led)
 
 	//GPIOC->MODER = (GPIOC->MODER & ~(0x0000FFFF)) | (0x00005555); // PC0-PC7 as outputs (red leds)
 }
