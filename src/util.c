@@ -360,8 +360,34 @@ q16_t qdiv(q16_t ina, q16_t inb)
 q16_t parVal(uint8_t *inp, uint8_t len)
 {
 
-
-
 	return 0;
 }
 
+// integer square root function. source: http://medialab.freaknet.org/martin/src/sqrt/sqrt.c
+uint32_t isqrt(uint32_t ini)
+{
+    uint32_t op, res, one;
+
+
+    op = ini;
+    res = 0;
+
+    /* "one" starts at the highest power of four <= than the argument. */
+
+    one = 1 << 30;		/* second-to-top bit set */
+    while (one > op)
+      one >>= 2;
+
+    while (one != 0)
+      {
+	if (op >= res + one)
+	  {
+	    op = op - (res + one);
+	    res = res + 2 * one;
+	  }
+	res /= 2;
+	one /= 4;
+      }
+    return (res);
+
+}

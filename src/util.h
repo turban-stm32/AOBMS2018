@@ -30,3 +30,4 @@ void tx_buff_f(void);
 void rx_buff_f(void);
 void tx_nbuff_f(uint8_t n);
 uint8_t write_word_E2(uint32_t address, uint32_t ini);
+uint32_t isqrt(uint32_t ini);

@@ -218,6 +218,11 @@ void *sVal() // set value state
 		mode |= (1<<2); //set third bit = balancing current initialized
 		write_word_E2((E2_ADDR+20), (uint32_t)mode);
 		write_word_E2((E2_ADDR+32), (uint32_t)ibal);
+
+		pwm1=isqrt((uint32_t)qtoi16(qdiv(qmul(FLYBACK_CONSTANT, i16toq((uint16_t)ibal)),vcell)));
+		//pwm1=qtoi16(qdiv(qmul(FLYBACK_CONSTANT, i16toq((uint16_t)ibal)),vcell));
+
+
 		ITOS(val_buff_str_out, sizeof(val_buff_str_out), ibal);
 	}
 	else if(strncmp((char*)param_buff, "wupe", 4)==0)
@@ -300,8 +305,11 @@ void *meas() // measure state
 	vdda_meas=qmul(qdiv(i16toq((*VREFINT_CAL)<<4),i16toq(adc_vals[3])),i16toq(3)); // vrefint_cal is in 12-bit resolution, needs to be multiplied by 2^4=16
 	vcell=getVoltage(vdda_meas, adc_vals[0], CELL_RES_DIV);
 	vpack_hi=getVoltage(vdda_meas, adc_vals[1], PACKHI_RES_DIV);
-	vpack_lo=qmul(vdda_meas,PACKLO_RES_DIV)-getVoltage(vdda_meas, adc_vals[2], PACKLO_RES_DIV);
-	vpack=vpack_hi+vpack_lo-vdda_meas;
+	vpack_lo=qmul(vcell,PACKLO_RES_DIV)-getVoltage(vdda_meas, adc_vals[2], PACKLO_RES_DIV);
+
+	vpack=vpack_hi+vpack_lo-vcell;
+
+	//vpack=qmul(vcell,(PACKLO_RES_DIV-(1<<16)))+getVoltage(vdda_meas, adc_vals[1], PACKHI_RES_DIV)-getVoltage(vdda_meas, adc_vals[2], PACKLO_RES_DIV);
 	temp=getTemp(vdda_meas,adc_vals[4]);
 
 

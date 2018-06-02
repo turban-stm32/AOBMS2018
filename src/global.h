@@ -2,6 +2,7 @@
 #define CELL_RES_DIV ((q16_t)(0x1AAAA)) // cell resistor 1/divider ((15k+10k)/15k=1.66666) in q16 format
 #define PACKHI_RES_DIV ((q16_t)(0x215555)) // pack hi measurement resistor 1/divider ((220k+6.8k)/6.8k=33.33333) in q16 format
 #define PACKLO_RES_DIV ((q16_t)(0x215555)) // pack lo measurement resistor 1/divider ((220k+6.8k)/6.8k=33.33333) in q16 format
+#define FLYBACK_CONSTANT ((q16_t)(0x33333)) // Cnstant of flybac converter (2*Lpri*160^2)/(T*1000)=3.2, where Lpri is primary inductance in uH (0.625),160 is full range of PWM, T is period of PWM in us (10), and 1000 is decadic correction of orders
 
 #define ERROR 	(1)
 #define OK 		(0)
